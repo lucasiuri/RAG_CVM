@@ -1,7 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 import os
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin
+from pypdf import PdfWriter
 
 def download_pdfs(url, directory = 'data_cvm'):
     """
@@ -88,6 +89,47 @@ def download_pdfs(url, directory = 'data_cvm'):
     
     print('Download process finished.')
 
+def merge_pdfs(folder_path = './', output_filename = 'merged_document.pdf'):
+    """
+    Merges all PDF files inside a folder into a single PDF document.
+
+    :param folder_path: the path to folder containing the PDF files.
+    :param output_filename: name of the file contaning the merged documents.
+    """
+    merger = PdfWriter()
+
+    # Getting the list of all files inside the folder
+    try:
+        pdf_files = sorted([f for f in os.listdir(folder_path) if f.lower().endswith('.pdf')])
+    except FileNotFoundError:
+        print(f'The folder "{folder_path}" was not found.')
+
+    if not pdf_files:
+        print(f'No PDF files found in "{folder_path}".')
+        return
+    
+    print(f'Found {len(pdf_files)} PDF files in {folder_path}.')
+
+    # Appending all the PDF files found to the merger
+    for filename in pdf_files:
+        filepath = os.path.join(folder_path, filename)
+        print(f'Adding: {filename}')
+        try:
+            merger.append(filepath)
+        except Exception as e:
+            print(f'An error occurred during the merging process: {e}')
+    # Writing the merged PDF to the output file
+    try:
+        with open(os.path.join(folder_path,output_filename), 'wb') as output_file:
+            merger.write(output_file)
+        print(f'Succesfully merged the files into "{output_filename}".')
+    except Exception as e:
+        print(f'An error occurred during the writing process: {e}')
+    finally:
+        merger.close()
+
+
 if __name__ == '__main__':
     url = 'https://www.gov.br/cvm/pt-br/centrais-de-conteudo/publicacoes/relatorios/relatorio-de-gestao-da-cvm'
-    download_pdfs(url)
+    #download_pdfs(url)
+    merge_pdfs(folder_path='./data_cvm')
